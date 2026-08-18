@@ -1,39 +1,84 @@
-import { Link, useParams } from "react-router";
+import { Link, useParams, useLocation } from "react-router";
 import { useState } from "react";
-import { useCarrito } from "../context/CarritoContext";
 import productos from "../helpers/productos";
+import productosGym from "../helpers/productosGym";
 
 const ProductoDetalle = () => {
   const { id } = useParams();
+const location = useLocation();
+
+const categoria = location.pathname.startsWith("/gym")
+  ? "gym"
+  : "ropa";
 
   const [colorSeleccionado, setColorSeleccionado] = useState(null);
   const [talleSeleccionado, setTalleSeleccionado] = useState(null);
   const [cantidad, setCantidad] = useState(1);
 
-  const { agregarAlCarrito } = useCarrito();
+  // Elegimos de dónde buscar el producto:
+  // Ropa → productos.js
+  // Gym → productosGym.js
+  const listaProductos =
+    categoria === "gym" ? productosGym : productos;
 
-  const producto = productos.find(
+  const producto = listaProductos.find(
     (producto) => producto.id === Number(id)
   );
 
+  // Ruta para volver a la sección correspondiente
+  const rutaVolver =
+    categoria === "gym" ? "/gym" : "/ropa";
+
+  // Si no encuentra el producto
   if (!producto) {
     return (
       <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+
         <div className="text-center">
+
           <h1 className="text-3xl font-bold text-gray-900">
             Producto no encontrado
           </h1>
 
           <Link
-            to="/ropa"
+            to={rutaVolver}
             className="inline-block mt-6 bg-blue-900 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition"
           >
-            Volver a ropa
+            Volver
           </Link>
+
         </div>
+
       </main>
     );
   }
+
+  // CONSULTAR POR WHATSAPP
+  const consultarPorWhatsApp = () => {
+
+    if (!colorSeleccionado || !talleSeleccionado) {
+      alert("Seleccioná un color y un talle.");
+      return;
+    }
+
+    const subtotal = producto.precio * cantidad;
+
+    const mensaje = `👋 Hola, quiero consultar por este producto.
+
+🛍️ Producto: ${producto.nombre}
+🏷️ Marca: ${producto.marca}
+🎨 Color: ${colorSeleccionado}
+📏 Talle: ${talleSeleccionado}
+📦 Cantidad: ${cantidad}
+💰 Precio unitario: $${producto.precio.toLocaleString("es-AR")}
+💵 Total: $${subtotal.toLocaleString("es-AR")}`;
+
+    const url = `https://wa.me/543815301844?text=${encodeURIComponent(
+      mensaje
+    )}`;
+
+    window.open(url, "_blank");
+  };
 
   return (
     <main className="min-h-screen bg-gray-100 py-12 px-4">
@@ -42,10 +87,10 @@ const ProductoDetalle = () => {
 
         {/* BOTÓN VOLVER */}
         <Link
-          to="/ropa"
+          to={rutaVolver}
           className="inline-flex items-center mb-8 text-gray-600 hover:text-gray-900 transition"
         >
-          ← Volver a ropa
+          ← Volver
         </Link>
 
         {/* PRODUCTO */}
@@ -54,13 +99,15 @@ const ProductoDetalle = () => {
           <div className="grid grid-cols-1 md:grid-cols-2">
 
             {/* IMAGEN */}
-            <div className="bg-gray-100 min-h-[450px] flex items-center justify-center">
-              <img
-                src={producto.imagen}
-                alt={producto.nombre}
-                className="w-full h-full max-h-[650px] object-contain"
-              />
-            </div>
+            <div className="bg-gray-100 min-h-[600px] flex items-center justify-center overflow-hidden">
+
+  <img
+    src={producto.imagen}
+    alt={producto.nombre}
+    className="w-full h-full max-h-[600px] object-cover"
+  />
+
+</div>
 
             {/* INFORMACIÓN */}
             <div className="p-8 md:p-12">
@@ -187,27 +234,13 @@ const ProductoDetalle = () => {
 
               </div>
 
-              {/* BOTÓN AGREGAR AL CARRITO */}
+              {/* WHATSAPP */}
               <button
                 type="button"
-                onClick={() => {
-
-                  if (!colorSeleccionado || !talleSeleccionado) {
-                    alert("Seleccioná un color y un talle.");
-                    return;
-                  }
-
-                  agregarAlCarrito(
-                    producto,
-                    colorSeleccionado,
-                    talleSeleccionado
-                  );
-
-                  alert("Producto agregado al carrito.");
-                }}
-                className="w-full mt-10 bg-blue-900 text-white py-4 rounded-xl font-semibold text-lg hover:bg-blue-800 transition"
+                onClick={consultarPorWhatsApp}
+                className="w-full mt-10 bg-green-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-green-700 transition"
               >
-                Agregar al carrito
+                Consultar por WhatsApp
               </button>
 
             </div>

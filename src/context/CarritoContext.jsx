@@ -6,12 +6,12 @@ export const CarritoProvider = ({ children }) => {
   const [carrito, setCarrito] = useState([]);
 
   // Agregar un producto al carrito
-  const agregarAlCarrito = (producto, color, talle) => {
+  const agregarAlCarrito = (producto, color, talle, cantidad) => {
     const productoCarrito = {
       ...producto,
       colorSeleccionado: color,
       talleSeleccionado: talle,
-      cantidad: 1,
+      cantidad: cantidad,
     };
 
     setCarrito((carritoActual) => [

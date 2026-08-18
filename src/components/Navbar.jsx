@@ -9,7 +9,7 @@ const Navbar = () => {
         <div>
           <Link to="/" className="block">
             <h1 className="text-2xl font-bold text-blue-900">
-              ACTIVEE
+              ACTIVE
             </h1>
 
             <p className="text-xs text-gray-500">

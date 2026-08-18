@@ -2,7 +2,7 @@ const productos = [
   {
     id: 1,
     nombre: "Remera deportiva",
-    marca: "Activee",
+    marca: "Active",
     precio: 35000,
 
     imagen: "/productos/producto-1.jpg",
@@ -16,7 +16,7 @@ const productos = [
   {
     id: 2,
     nombre: "Buzo deportivo",
-    marca: "Activee",
+    marca: "Active",
     precio: 50000,
 
     imagen: "/productos/producto-2.jpg",
@@ -29,7 +29,7 @@ const productos = [
   {
     id: 3,
     nombre: "Conjunto deportivo",
-    marca: "Activee",
+    marca: "Active",
     precio: 65000,
 
     imagen: "/productos/producto-3.jpg",
@@ -42,7 +42,7 @@ const productos = [
   {
     id: 4,
     nombre: "Pantalón deportivo",
-    marca: "Activee",
+    marca: "Active",
     precio: 45000,
 
     imagen: "/productos/producto-4.jpg",
@@ -55,7 +55,7 @@ const productos = [
   {
     id: 5,
     nombre: "Campera deportiva",
-    marca: "Activee",
+    marca: "Active",
     precio: 75000,
 
     imagen: "/productos/producto-5.jpg",

@@ -1,13 +1,13 @@
 import { Link } from "react-router";
 
-const ProductCard = ({ producto }) => {
+const ProductCard = ({ producto, categoria = "ropa" }) => {
   if (!producto) {
     return null;
   }
 
   return (
     <Link
-      to={`/ropa/${producto.id}`}
+      to={`/${categoria}/${producto.id}`}
       className="group block"
     >
       <article className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
@@ -15,33 +15,38 @@ const ProductCard = ({ producto }) => {
         {/* IMAGEN DEL PRODUCTO */}
         <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
 
-  {/* Imagen principal */}
-  <img
-    src={producto.imagen}
-    alt={producto.nombre}
-    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
-  />
+          {/* IMAGEN PRINCIPAL */}
+          <img
+            src={producto.imagen}
+            alt={producto.nombre}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
+          />
 
-  {/* Imagen al pasar el mouse */}
-  <img
-    src={producto.imagenHover}
-    alt={`${producto.nombre} medidas`}
-    className="absolute inset-0 w-full h-full object-contain bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-  />
+          {/* IMAGEN AL PASAR EL MOUSE */}
+          {producto.imagenHover && (
+            <img
+              src={producto.imagenHover}
+              alt={`${producto.nombre} medidas`}
+              className="absolute inset-0 w-full h-full object-contain bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            />
+          )}
 
-</div>
+        </div>
 
         {/* INFORMACIÓN */}
         <div className="p-4">
 
+          {/* MARCA */}
           <p className="text-sm text-gray-500">
             {producto.marca}
           </p>
 
+          {/* NOMBRE */}
           <h2 className="text-lg font-semibold text-gray-900 mt-1">
             {producto.nombre}
           </h2>
 
+          {/* PRECIO */}
           <p className="text-xl font-bold text-blue-900 mt-3">
             ${producto.precio.toLocaleString("es-AR")}
           </p>
@@ -49,11 +54,13 @@ const ProductCard = ({ producto }) => {
           {/* COLORES */}
           {producto.colores && producto.colores.length > 0 && (
             <div className="mt-4">
+
               <p className="text-sm font-medium text-gray-700 mb-2">
                 Colores
               </p>
 
               <div className="flex flex-wrap gap-2">
+
                 {producto.colores.map((color) => (
                   <span
                     key={color}
@@ -62,18 +69,22 @@ const ProductCard = ({ producto }) => {
                     {color}
                   </span>
                 ))}
+
               </div>
+
             </div>
           )}
 
           {/* TALLES */}
           {producto.talles && producto.talles.length > 0 && (
             <div className="mt-4">
+
               <p className="text-sm font-medium text-gray-700 mb-2">
                 Talles
               </p>
 
               <div className="flex flex-wrap gap-2">
+
                 {producto.talles.map((talle) => (
                   <span
                     key={talle}
@@ -82,7 +93,9 @@ const ProductCard = ({ producto }) => {
                     {talle}
                   </span>
                 ))}
+
               </div>
+
             </div>
           )}
 

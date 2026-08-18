@@ -29,6 +29,7 @@ const Ropa = () => {
             <ProductCard
               key={producto.id}
               producto={producto}
+              categoria="ropa"
             />
           ))}
 
