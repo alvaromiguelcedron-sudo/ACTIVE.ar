@@ -5,7 +5,9 @@ const CarritoContext = createContext();
 export const CarritoProvider = ({ children }) => {
   const [carrito, setCarrito] = useState([]);
 
-  // Agregar un producto al carrito
+  // ==============================
+  // AGREGAR PRODUCTO AL CARRITO
+  // ==============================
   const agregarAlCarrito = (producto, color, talle, cantidad) => {
     const productoCarrito = {
       ...producto,
@@ -20,14 +22,50 @@ export const CarritoProvider = ({ children }) => {
     ]);
   };
 
-  // Eliminar un producto del carrito
+  // ==============================
+  // AUMENTAR CANTIDAD
+  // ==============================
+  const aumentarCantidad = (indice) => {
+    setCarrito((carritoActual) =>
+      carritoActual.map((producto, index) =>
+        index === indice
+          ? {
+              ...producto,
+              cantidad: producto.cantidad + 1,
+            }
+          : producto
+      )
+    );
+  };
+
+  // ==============================
+  // DISMINUIR CANTIDAD
+  // ==============================
+  const disminuirCantidad = (indice) => {
+    setCarrito((carritoActual) =>
+      carritoActual.map((producto, index) =>
+        index === indice
+          ? {
+              ...producto,
+              cantidad: Math.max(1, producto.cantidad - 1),
+            }
+          : producto
+      )
+    );
+  };
+
+  // ==============================
+  // ELIMINAR PRODUCTO DEL CARRITO
+  // ==============================
   const eliminarDelCarrito = (indice) => {
     setCarrito((carritoActual) =>
       carritoActual.filter((_, index) => index !== indice)
     );
   };
 
-  // Vaciar todo el carrito
+  // ==============================
+  // VACIAR TODO EL CARRITO
+  // ==============================
   const vaciarCarrito = () => {
     setCarrito([]);
   };
@@ -37,6 +75,8 @@ export const CarritoProvider = ({ children }) => {
       value={{
         carrito,
         agregarAlCarrito,
+        aumentarCantidad,
+        disminuirCantidad,
         eliminarDelCarrito,
         vaciarCarrito,
       }}
@@ -46,7 +86,9 @@ export const CarritoProvider = ({ children }) => {
   );
 };
 
-// Hook para utilizar el carrito
+// ==============================
+// HOOK PARA UTILIZAR EL CARRITO
+// ==============================
 export const useCarrito = () => {
   return useContext(CarritoContext);
 };

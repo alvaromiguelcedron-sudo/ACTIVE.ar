@@ -13,7 +13,7 @@ const Home = () => {
       <section className="text-center py-20 px-4">
 
         <p className="text-blue-900 font-semibold tracking-widest">
-          ACTIVEE | MEN'S SPORTSWEAR
+          ACTIVE | MEN'S SPORTSWEAR
         </p>
 
         <h1 className="text-5xl font-bold text-gray-900 mt-4">
@@ -39,7 +39,7 @@ const Home = () => {
         <div className="text-center mb-10">
 
           <p className="text-blue-900 font-semibold tracking-widest">
-            ACTIVEE
+            ACTIVE
           </p>
 
           <h2 className="text-3xl font-bold text-gray-900 mt-2">

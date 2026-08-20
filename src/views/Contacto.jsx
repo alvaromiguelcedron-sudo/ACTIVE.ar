@@ -8,7 +8,7 @@ const Contacto = () => {
         <div className="text-center mb-12">
 
           <p className="text-blue-900 font-semibold tracking-widest">
-            ACTIVEE
+            ACTIVE
           </p>
 
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mt-2">
