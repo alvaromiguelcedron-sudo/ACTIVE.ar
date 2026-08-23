@@ -51,7 +51,7 @@ ${producto.nombre}
 
 💵 TOTAL: $${totalCarrito.toLocaleString("es-AR")}`;
 
-    const url = `https://wa.me/543815301844?text=${encodeURIComponent(
+    const url = `https://wa.me/543813341115?text=${encodeURIComponent(
       mensaje
     )}`;
 
