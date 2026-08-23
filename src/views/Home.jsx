@@ -222,7 +222,7 @@ const Home = () => {
         </p>
 
         <a
-          href="https://wa.me/543813318394"
+          href="https://wa.me/543813341115"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block mt-8 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
