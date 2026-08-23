@@ -5,98 +5,88 @@ const ProductCard = ({ producto, categoria = "ropa" }) => {
     return null;
   }
 
+  // ==========================================
+  // IMAGEN DEL PRODUCTO
+  // ==========================================
+
+  // Productos nuevos de Supabase:
+  // imagen_url
+  //
+  // Productos antiguos:
+  // imagen
+  const imagenProducto =
+    producto.imagen_url || producto.imagen;
+
   return (
     <Link
-  to={`/${categoria}/${producto.id}`}
-  state={{ genero: producto.genero }}
-  className="group block"
->
+      to={`/${categoria}/${producto.id || producto.identificador}`}
+      state={{ genero: producto.genero }}
+      className="group block"
+    >
       <article className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
 
-        {/* IMAGEN DEL PRODUCTO */}
+        {/* ======================================
+            IMAGEN DEL PRODUCTO
+        ====================================== */}
+
         <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
 
-          {/* =========================
-              ROPA
-              ========================= */}
+          {/* IMAGEN PRINCIPAL */}
 
-          {categoria === "ropa" && (
-            <>
-              {/* Imagen principal */}
-              <img
-                src={producto.imagen}
-                alt={producto.nombre}
-                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
-              />
-
-              {/* Imagen al pasar el mouse */}
-              {producto.imagenHover && (
-                <img
-                  src={producto.imagenHover}
-                  alt={`${producto.nombre} medidas`}
-                  className="absolute inset-0 w-full h-full object-contain bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                />
-              )}
-            </>
+          {imagenProducto && (
+            <img
+              src={imagenProducto}
+              alt={producto.nombre}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
           )}
 
+          {/* CAPA OSCURA */}
 
-          {/* =========================
-              GYM
-              ========================= */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300">
+          </div>
 
-          {categoria === "gym" && (
-            <>
-              {/* Imagen del producto */}
-              <img
-                src={producto.imagen}
-                alt={producto.nombre}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
+          {/* VER PRODUCTO */}
 
-              {/* Capa oscura */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300"></div>
-
-              {/* VER PRODUCTO */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-
-                <span className="bg-white text-gray-900 px-6 py-3 rounded-lg font-semibold shadow-lg flex items-center gap-2">
-
-                  Ver producto
-
-                  <span className="text-xl">
-                    →
-                  </span>
-
-                </span>
-
-              </div>
-            </>
-          )}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <span className="bg-white text-gray-900 px-6 py-3 rounded-lg font-semibold shadow-lg flex items-center gap-2">
+              Ver producto
+              <span className="text-xl">
+                →
+              </span>
+            </span>
+          </div>
 
         </div>
 
+        {/* ======================================
+            INFORMACIÓN
+        ====================================== */}
 
-        {/* INFORMACIÓN */}
         <div className="p-4">
 
           {/* MARCA */}
+
           <p className="text-sm text-gray-500">
             {producto.marca}
           </p>
 
           {/* NOMBRE */}
+
           <h2 className="text-lg font-semibold text-gray-900 mt-1">
             {producto.nombre}
           </h2>
 
           {/* PRECIO */}
+
           <p className="text-xl font-bold text-blue-900 mt-3">
-            ${producto.precio.toLocaleString("es-AR")}
+            ${Number(producto.precio).toLocaleString("es-AR")}
           </p>
 
+          {/* ======================================
+              COLORES
+          ====================================== */}
 
-          {/* COLORES */}
           {producto.colores && producto.colores.length > 0 && (
             <div className="mt-4">
 
@@ -120,8 +110,10 @@ const ProductCard = ({ producto, categoria = "ropa" }) => {
             </div>
           )}
 
+          {/* ======================================
+              TALLES
+          ====================================== */}
 
-          {/* TALLES */}
           {producto.talles && producto.talles.length > 0 && (
             <div className="mt-4">
 

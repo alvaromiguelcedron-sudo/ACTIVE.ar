@@ -1,22 +1,36 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import ProductCard from "../components/ProductCard";
-import productosGym from "../helpers/productosGym";
+import { supabase } from "../supabase/supabaseClient";
 
 const Gym = () => {
+  // ==========================================
+  // UBICACIÓN
+  // ==========================================
 
-  // Detectamos si venimos desde un producto
   const location = useLocation();
 
-  // Recuperamos Mujer o Hombre desde el producto
+  // Recuperamos el género si venimos desde un producto
   const generoAnterior = location.state?.genero;
 
-  // Género seleccionado
+  // ==========================================
+  // ESTADOS
+  // ==========================================
+
   const [generoSeleccionado, setGeneroSeleccionado] = useState(
     generoAnterior || "hombre"
   );
 
-  // Cambiar logo y título de la pestaña al entrar a Gym
+  const [productos, setProductos] = useState([]);
+
+  const [cargando, setCargando] = useState(true);
+
+  const [error, setError] = useState("");
+
+  // ==========================================
+  // CAMBIAR LOGO Y TÍTULO
+  // ==========================================
+
   useEffect(() => {
     document.title = "Active Training";
 
@@ -26,7 +40,7 @@ const Gym = () => {
       favicon.href = "/logo-active.gym.png";
     }
 
-    // Cuando salimos de Gym, volvemos al logo principal
+    // Cuando salimos de Gym
     return () => {
       document.title = "Active";
 
@@ -36,19 +50,126 @@ const Gym = () => {
     };
   }, []);
 
-  // Filtrar productos según Mujer / Hombre
-  const productosFiltrados = productosGym.filter(
-    (producto) => producto.genero === generoSeleccionado
+  // ==========================================
+  // OBTENER PRODUCTOS DE SUPABASE
+  // ==========================================
+
+  useEffect(() => {
+    const obtenerProductos = async () => {
+      setCargando(true);
+      setError("");
+
+      const { data, error } = await supabase
+        .from("productos")
+        .select("*")
+        .eq("categoria", "gym")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error al obtener productos de Gym:", error);
+
+        setError("No se pudieron cargar los productos de Gym.");
+
+        setCargando(false);
+
+        return;
+      }
+
+      console.log("Productos de Gym obtenidos de Supabase:", data);
+
+      // ==========================================
+      // ADAPTAMOS LOS PRODUCTOS
+      // ==========================================
+
+      const productosAdaptados = data.map((producto) => ({
+        id: producto.id,
+
+        nombre: producto.nombre,
+
+        marca: producto.marca,
+
+        precio: Number(producto.precio),
+
+        // Supabase
+        imagen_url: producto.imagen_url,
+
+        // ProductCard también puede utilizar imagen
+        imagen: producto.imagen_url,
+
+        colores: Array.isArray(producto.colores)
+          ? producto.colores
+          : [],
+
+        talles: Array.isArray(producto.talles)
+          ? producto.talles
+          : [],
+
+        genero: producto.genero,
+
+        categoria: producto.categoria,
+
+        descripcion: producto["descripción"],
+
+        stock: producto.stock,
+      }));
+
+      setProductos(productosAdaptados);
+
+      setCargando(false);
+    };
+
+    obtenerProductos();
+  }, []);
+
+  // ==========================================
+  // FILTRAR POR GÉNERO
+  // ==========================================
+
+  const productosFiltrados = productos.filter(
+    (producto) =>
+      producto.genero === generoSeleccionado
   );
+
+  // ==========================================
+  // CARGANDO
+  // ==========================================
+
+  if (cargando) {
+    return (
+      <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+        <p className="text-xl text-gray-600">
+          Cargando productos...
+        </p>
+      </main>
+    );
+  }
+
+  // ==========================================
+  // ERROR
+  // ==========================================
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+        <p className="text-xl text-red-600 text-center">
+          {error}
+        </p>
+      </main>
+    );
+  }
+
+  // ==========================================
+  // PÁGINA
+  // ==========================================
 
   return (
     <main className="min-h-screen bg-gray-100 py-12 px-4">
 
       <div className="max-w-7xl mx-auto">
 
-        {/* =========================
+        {/* ======================================
             ENCABEZADO
-        ========================== */}
+        ====================================== */}
 
         <div className="text-center mb-10">
 
@@ -66,12 +187,11 @@ const Gym = () => {
 
         </div>
 
-
-        {/* =========================
+        {/* ======================================
             BOTONES MUJER / HOMBRE
-        ========================== */}
+        ====================================== */}
 
-        <div className="flex justify-center gap-4 mb-12">
+        <div className="flex flex-wrap justify-center gap-4 mb-12">
 
           {/* MUJER */}
 
@@ -86,7 +206,6 @@ const Gym = () => {
           >
             MUJER
           </button>
-
 
           {/* HOMBRE */}
 
@@ -104,24 +223,37 @@ const Gym = () => {
 
         </div>
 
-
-        {/* =========================
+        {/* ======================================
             PRODUCTOS
-        ========================== */}
+        ====================================== */}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {productosFiltrados.length === 0 ? (
 
-          {productosFiltrados.map((producto) => (
+          <div className="text-center py-20">
 
-            <ProductCard
-              key={producto.id}
-              producto={producto}
-              categoria="gym"
-            />
+            <p className="text-xl text-gray-500">
+              No hay productos disponibles.
+            </p>
 
-          ))}
+          </div>
 
-        </div>
+        ) : (
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            {productosFiltrados.map((producto) => (
+
+              <ProductCard
+                key={producto.id}
+                producto={producto}
+                categoria="gym"
+              />
+
+            ))}
+
+          </div>
+
+        )}
 
       </div>
 
