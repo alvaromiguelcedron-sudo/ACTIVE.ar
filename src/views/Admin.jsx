@@ -3,24 +3,28 @@ import { supabase } from "../supabase/supabaseClient";
 
 const Admin = () => {
   // ==========================================
-  // ESTADOS DEL FORMULARIO
+  // DATOS DEL PRODUCTO
   // ==========================================
 
   const [nombre, setNombre] = useState("");
   const [marca, setMarca] = useState("");
   const [precio, setPrecio] = useState("");
+
   const [categorias, setCategorias] = useState("");
+  const [genero, setGenero] = useState("");
+
   const [descripcion, setDescripcion] = useState("");
   const [colores, setColores] = useState("");
-  const [alturas, setAlturas] = useState("");
   const [existencias, setExistencias] = useState("");
 
   // ==========================================
-  // ESTADO DE IMAGEN
+  // IMAGEN
   // ==========================================
 
   const [imagen, setImagen] = useState(null);
   const [vistaPrevia, setVistaPrevia] = useState("");
+
+  const inputImagenRef = useRef(null);
 
   // ==========================================
   // PRODUCTOS
@@ -30,22 +34,31 @@ const Admin = () => {
   const [cargandoProductos, setCargandoProductos] = useState(true);
 
   // ==========================================
-  // ESTADO DE EDICIÓN
+  // EDICIÓN
   // ==========================================
 
   const [editandoId, setEditandoId] = useState(null);
 
-  // Referencia al input de imagen
-  const inputImagenRef = useRef(null);
+  // ==========================================
+  // ESTADO
+  // ==========================================
+
+  const [guardando, setGuardando] = useState(false);
 
   // ==========================================
-  // CUANDO SELECCIONAMOS UNA IMAGEN
+  // SELECCIONAR IMAGEN
   // ==========================================
 
   const seleccionarImagen = (e) => {
-    const archivo = e.target.files[0];
+    const archivo = e.target.files?.[0];
 
     if (!archivo) {
+      return;
+    }
+
+    if (!archivo.type.startsWith("image/")) {
+      alert("Seleccioná un archivo de imagen válido.");
+      e.target.value = "";
       return;
     }
 
@@ -64,26 +77,48 @@ const Admin = () => {
 
     const { data, error } = await supabase
       .from("productos")
-      .select("*")
-      .order("id", { ascending: false });
+      .select(
+        `
+        id,
+        created_at,
+        nombre,
+        marca,
+        precio,
+        categorias,
+        colores,
+        alturas,
+        existencias,
+        imagen_url,
+        genero,
+        descripcion
+        `
+      )
+      .order("id", {
+        ascending: false,
+      });
 
     if (error) {
-      console.error("Error obteniendo productos:", error);
+      console.error(
+        "ERROR OBTENIENDO PRODUCTOS:",
+        error
+      );
 
       setProductos([]);
       setCargandoProductos(false);
-
       return;
     }
 
-    console.log("Productos del administrador:", data);
+    console.log(
+      "PRODUCTOS CORRECTAMENTE:",
+      data
+    );
 
     setProductos(data || []);
     setCargandoProductos(false);
   };
 
   // ==========================================
-  // CARGAR PRODUCTOS AL ENTRAR
+  // CARGAR PRODUCTOS AL ABRIR ADMIN
   // ==========================================
 
   useEffect(() => {
@@ -99,9 +134,9 @@ const Admin = () => {
     setMarca("");
     setPrecio("");
     setCategorias("");
+    setGenero("");
     setDescripcion("");
     setColores("");
-    setAlturas("");
     setExistencias("");
 
     setImagen(null);
@@ -109,9 +144,22 @@ const Admin = () => {
 
     setEditandoId(null);
 
-    // Limpiar input de imagen
     if (inputImagenRef.current) {
       inputImagenRef.current.value = "";
+    }
+  };
+
+  // ==========================================
+  // CAMBIAR CATEGORÍA
+  // ==========================================
+
+  const cambiarCategoria = (e) => {
+    const nuevaCategoria = e.target.value;
+
+    setCategorias(nuevaCategoria);
+
+    if (nuevaCategoria !== "gym") {
+      setGenero("");
     }
   };
 
@@ -120,40 +168,47 @@ const Admin = () => {
   // ==========================================
 
   const editarProducto = (producto) => {
-    console.log("Editando producto:", producto);
+    console.log(
+      "PRODUCTO PARA EDITAR:",
+      producto
+    );
 
-    // Cargar datos en el formulario
     setNombre(producto.nombre || "");
     setMarca(producto.marca || "");
-    setPrecio(producto.precio || "");
+    setPrecio(producto.precio ?? "");
+
     setCategorias(producto.categorias || "");
-    setDescripcion(producto.descripcion || "");
 
-    // Convertir arrays nuevamente a texto
-    setColores(
-      Array.isArray(producto.colores)
-        ? producto.colores.join(", ")
-        : producto.colores || ""
+    setGenero(producto.genero || "");
+
+    setDescripcion(
+      producto.descripcion || ""
     );
 
-    setAlturas(
-      Array.isArray(producto.alturas)
-        ? producto.alturas.join(", ")
-        : producto.alturas || ""
+    // COLORES
+    if (Array.isArray(producto.colores)) {
+      setColores(
+        producto.colores.join(", ")
+      );
+    } else {
+      setColores(producto.colores || "");
+    }
+
+    setExistencias(
+      producto.existencias ?? ""
     );
 
-    setExistencias(producto.existencias || "");
+    // IMAGEN ACTUAL
+    setVistaPrevia(
+      producto.imagen_url || ""
+    );
 
-    // Mostrar imagen actual
-    setVistaPrevia(producto.imagen_url || producto.imagen || "");
-
-    // No tenemos una imagen nueva todavía
+    // No hay imagen nueva seleccionada todavía
     setImagen(null);
 
-    // Guardamos qué producto estamos editando
+    // ID REAL
     setEditandoId(producto.id);
 
-    // Subir nuevamente al formulario
     window.scrollTo({
       top: 0,
       behavior: "smooth",
@@ -166,7 +221,7 @@ const Admin = () => {
 
   const cancelarEdicion = () => {
     const confirmar = window.confirm(
-      "¿Querés cancelar la edición de este producto?"
+      "¿Querés cancelar la edición?"
     );
 
     if (!confirmar) {
@@ -189,181 +244,316 @@ const Admin = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from("productos")
-      .delete()
-      .eq("id", id);
+    try {
+      const producto = productos.find(
+        (item) => item.id === id
+      );
 
-    if (error) {
+      // ========================================
+      // ELIMINAR PRODUCTO DE LA TABLA
+      // ========================================
+
+      const { error: errorProducto } =
+        await supabase
+          .from("productos")
+          .delete()
+          .eq("id", id);
+
+      if (errorProducto) {
+        console.error(
+          "ERROR ELIMINANDO PRODUCTO:",
+          errorProducto
+        );
+
+        alert(
+          `No se pudo eliminar el producto.\n\n${errorProducto.message}`
+        );
+
+        return;
+      }
+
+      // ========================================
+      // ELIMINAR IMAGEN DEL STORAGE
+      // ========================================
+
+      if (producto?.imagen_url) {
+        try {
+          const url = new URL(
+            producto.imagen_url
+          );
+
+          const partes =
+            url.pathname.split("/");
+
+          const indiceProductos =
+            partes.indexOf("productos");
+
+          if (indiceProductos !== -1) {
+            const nombreArchivo =
+              partes
+                .slice(indiceProductos + 1)
+                .join("/");
+
+            if (nombreArchivo) {
+              const {
+                error: errorImagen,
+              } = await supabase.storage
+                .from("productos")
+                .remove([
+                  nombreArchivo,
+                ]);
+
+              if (errorImagen) {
+                console.error(
+                  "ERROR ELIMINANDO IMAGEN:",
+                  errorImagen
+                );
+              }
+            }
+          }
+        } catch (errorImagen) {
+          console.error(
+            "ERROR PROCESANDO URL DE IMAGEN:",
+            errorImagen
+          );
+        }
+      }
+
+      alert(
+        "Producto eliminado correctamente."
+      );
+
+      if (editandoId === id) {
+        limpiarFormulario();
+      }
+
+      await obtenerProductos();
+    } catch (error) {
       console.error(
-        "Error eliminando producto:",
+        "ERROR INESPERADO ELIMINANDO:",
         error
       );
 
-      alert("No se pudo eliminar el producto.");
-
-      return;
+      alert(
+        `Ocurrió un error.\n\n${error.message}`
+      );
     }
-
-    alert("Producto eliminado correctamente.");
-
-    // Si justo estábamos editando este producto,
-    // limpiamos el formulario
-    if (editandoId === id) {
-      limpiarFormulario();
-    }
-
-    obtenerProductos();
   };
 
   // ==========================================
-  // GUARDAR / ACTUALIZAR PRODUCTO
+  // GUARDAR PRODUCTO
   // ==========================================
 
   const guardarProducto = async (e) => {
     e.preventDefault();
 
-    // ==========================================
+    if (guardando) {
+      return;
+    }
+
+    // ========================================
     // VALIDACIONES
-    // ==========================================
+    // ========================================
 
     if (
-      !nombre ||
-      !marca ||
-      !precio ||
+      !nombre.trim() ||
+      !marca.trim() ||
+      precio === "" ||
       !categorias ||
-      !descripcion ||
-      !colores ||
-      !alturas ||
-      !existencias
+      !descripcion.trim() ||
+      !colores.trim() ||
+      existencias === ""
     ) {
-      alert("Completá todos los campos.");
+      alert(
+        "Completá todos los campos."
+      );
 
       return;
     }
 
-    // Si estamos creando un producto nuevo,
-    // obligamos a seleccionar una imagen.
+    // ========================================
+    // GYM NECESITA GÉNERO
+    // ========================================
+
+    if (
+      categorias === "gym" &&
+      !genero
+    ) {
+      alert(
+        "Seleccioná Hombre o Mujer para el producto de Gym."
+      );
+
+      return;
+    }
+
+    // ========================================
+    // ROPA NO GUARDA GÉNERO
+    // ========================================
+
+    const generoParaGuardar =
+      categorias === "gym"
+        ? genero
+        : null;
+
+    // ========================================
+    // IMAGEN OBLIGATORIA AL CREAR
+    // ========================================
+
     if (!editandoId && !imagen) {
-      alert("Seleccioná una imagen para el producto.");
+      alert(
+        "Seleccioná una imagen para el producto."
+      );
 
       return;
     }
+
+    setGuardando(true);
+
+    let imagenSubidaNueva = null;
 
     try {
       // ========================================
-      // CONVERTIR COLORES EN ARRAY
+      // CONVERTIR COLORES
       // ========================================
 
       const coloresArray = colores
         .split(",")
         .map((color) => color.trim())
-        .filter((color) => color !== "");
+        .filter(
+          (color) => color !== ""
+        );
 
       // ========================================
-      // CONVERTIR ALTURAS EN ARRAY
-      // ========================================
-
-      const alturasArray = alturas
-        .split(",")
-        .map((altura) => altura.trim())
-        .filter((altura) => altura !== "");
-
-      // ========================================
-      // SI ESTAMOS EDITANDO
+      // EDITAR PRODUCTO
       // ========================================
 
       if (editandoId) {
         let imagenUrlActual = null;
 
-        // Buscar el producto que estamos editando
-        const productoActual = productos.find(
-          (producto) => producto.id === editandoId
-        );
+        const productoActual =
+          productos.find(
+            (producto) =>
+              producto.id === editandoId
+          );
 
         imagenUrlActual =
           productoActual?.imagen_url ||
-          productoActual?.imagen ||
           null;
 
-        // ========================================
-        // SI SELECCIONÓ UNA NUEVA IMAGEN
-        // ========================================
+        // ======================================
+        // SI HAY IMAGEN NUEVA
+        // ======================================
 
         if (imagen) {
           const nombreArchivo =
-            `${Date.now()}-${imagen.name}`;
+            `${Date.now()}-${imagen.name
+              .replace(/\s+/g, "-")
+              .replace(/[^a-zA-Z0-9._-]/g, "")}`;
 
           console.log(
-            "Subiendo nueva imagen:",
+            "SUBIENDO NUEVA IMAGEN:",
             nombreArchivo
           );
 
-          const { error: errorImagen } =
-            await supabase.storage
-              .from("productos")
-              .upload(
-                nombreArchivo,
-                imagen
-              );
+          const {
+            error: errorImagen,
+          } = await supabase.storage
+            .from("productos")
+            .upload(
+              nombreArchivo,
+              imagen,
+              {
+                cacheControl: "3600",
+                upsert: false,
+                contentType:
+                  imagen.type,
+              }
+            );
 
           if (errorImagen) {
             console.error(
-              "Error al subir nueva imagen:",
+              "ERROR SUBIENDO IMAGEN:",
               errorImagen
             );
 
             alert(
-              "Hubo un error al subir la nueva imagen."
+              `Hubo un error al subir la imagen.\n\n${errorImagen.message}`
             );
 
+            setGuardando(false);
             return;
           }
 
-          // Obtener nueva URL
-          const { data: datosImagen } =
-            supabase.storage
-              .from("productos")
-              .getPublicUrl(nombreArchivo);
+          imagenSubidaNueva =
+            nombreArchivo;
+
+          const {
+            data: datosImagen,
+          } = supabase.storage
+            .from("productos")
+            .getPublicUrl(
+              nombreArchivo
+            );
 
           imagenUrlActual =
             datosImagen.publicUrl;
-
-          console.log(
-            "Nueva URL de imagen:",
-            imagenUrlActual
-          );
         }
 
-        // ========================================
-        // ACTUALIZAR PRODUCTO EN SUPABASE
-        // ========================================
+        // ======================================
+        // ACTUALIZAR PRODUCTO
+        // ======================================
 
-        const { error } = await supabase
+        const {
+          error: errorActualizacion,
+        } = await supabase
           .from("productos")
           .update({
-            nombre: nombre,
-            marca: marca,
+            nombre: nombre.trim(),
+            marca: marca.trim(),
             precio: Number(precio),
-            categorias: categorias,
-            descripcion: descripcion,
-            colores: coloresArray,
-            alturas: alturasArray,
-            existencias: Number(existencias),
-            imagen_url: imagenUrlActual,
+
+            categorias:
+              categorias,
+
+            descripcion:
+              descripcion.trim(),
+
+            colores:
+              coloresArray,
+
+            existencias:
+              Number(existencias),
+
+            imagen_url:
+              imagenUrlActual,
+
+            genero:
+              generoParaGuardar,
           })
           .eq("id", editandoId);
 
-        if (error) {
+        if (errorActualizacion) {
           console.error(
             "ERROR ACTUALIZANDO PRODUCTO:",
-            error
+            errorActualizacion
           );
+
+          // Si subimos una imagen nueva
+          // pero falló la actualización,
+          // la eliminamos.
+          if (imagenSubidaNueva) {
+            await supabase.storage
+              .from("productos")
+              .remove([
+                imagenSubidaNueva,
+              ]);
+          }
 
           alert(
-            "No se pudo actualizar el producto."
+            `No se pudo actualizar el producto.\n\n${errorActualizacion.message}`
           );
 
+          setGuardando(false);
           return;
         }
 
@@ -371,12 +561,11 @@ const Admin = () => {
           "¡Producto actualizado correctamente!"
         );
 
-        // Limpiar formulario
         limpiarFormulario();
 
-        // Volver a cargar productos
-        obtenerProductos();
+        await obtenerProductos();
 
+        setGuardando(false);
         return;
       }
 
@@ -384,109 +573,184 @@ const Admin = () => {
       // CREAR PRODUCTO NUEVO
       // ==========================================
 
-      // ========================================
-      // 1. CREAR NOMBRE ÚNICO PARA LA IMAGEN
-      // ========================================
-
       const nombreArchivo =
-        `${Date.now()}-${imagen.name}`;
+        `${Date.now()}-${imagen.name
+          .replace(/\s+/g, "-")
+          .replace(/[^a-zA-Z0-9._-]/g, "")}`;
 
       console.log(
-        "Subiendo imagen:",
+        "SUBIENDO IMAGEN:",
         nombreArchivo
       );
 
       // ========================================
-      // 2. SUBIR IMAGEN A STORAGE
+      // SUBIR IMAGEN A STORAGE
       // ========================================
 
-      const { error: errorImagen } =
-        await supabase.storage
-          .from("productos")
-          .upload(
-            nombreArchivo,
-            imagen
-          );
+      const {
+        error: errorImagen,
+      } = await supabase.storage
+        .from("productos")
+        .upload(
+          nombreArchivo,
+          imagen,
+          {
+            cacheControl: "3600",
+            upsert: false,
+            contentType:
+              imagen.type,
+          }
+        );
 
       if (errorImagen) {
         console.error(
-          "Error al subir imagen:",
+          "ERROR SUBIENDO IMAGEN:",
           errorImagen
         );
 
         alert(
-          "Hubo un error al subir la imagen."
+          `Hubo un error al subir la imagen.\n\n${errorImagen.message}`
         );
 
+        setGuardando(false);
         return;
       }
 
+      imagenSubidaNueva =
+        nombreArchivo;
+
       console.log(
-        "Imagen subida correctamente"
+        "IMAGEN SUBIDA CORRECTAMENTE"
       );
 
       // ========================================
-      // 3. OBTENER URL PÚBLICA
+      // OBTENER URL PÚBLICA
       // ========================================
 
-      const { data: datosImagen } =
-        supabase.storage
-          .from("productos")
-          .getPublicUrl(nombreArchivo);
+      const {
+        data: datosImagen,
+      } = supabase.storage
+        .from("productos")
+        .getPublicUrl(
+          nombreArchivo
+        );
 
       const imagenUrl =
         datosImagen.publicUrl;
 
       console.log(
-        "URL de la imagen:",
+        "URL DE IMAGEN:",
         imagenUrl
       );
 
       // ========================================
-      // 4. GUARDAR PRODUCTO EN LA TABLA
+      // CREAR PRODUCTO
+      // ========================================
+      //
+      // IMPORTANTE:
+      // ESTOS SON LOS NOMBRES REALES
+      // DE TU TABLA productos.
       // ========================================
 
-      const { data, error } =
-        await supabase
-          .from("productos")
-          .insert([
-            {
-              nombre: nombre,
-              marca: marca,
-              precio: Number(precio),
-              categorias: categorias,
-              descripcion: descripcion,
-              colores: coloresArray,
-              alturas: alturasArray,
-              existencias: Number(existencias),
-              imagen_url: imagenUrl,
-            },
-          ])
-          .select();
+      const productoNuevo = {
+        nombre:
+          nombre.trim(),
+
+        marca:
+          marca.trim(),
+
+        precio:
+          Number(precio),
+
+        categorias:
+          categorias,
+
+        descripcion:
+          descripcion.trim(),
+
+        colores:
+          coloresArray,
+
+        existencias:
+          Number(existencias),
+
+        imagen_url:
+          imagenUrl,
+
+        genero:
+          generoParaGuardar,
+      };
+
+      console.log(
+        "PRODUCTO QUE SE VA A GUARDAR:",
+        productoNuevo
+      );
+
+      const {
+        data,
+        error,
+      } = await supabase
+        .from("productos")
+        .insert([
+          productoNuevo,
+        ])
+        .select();
 
       // ========================================
-      // 5. SI HAY ERROR
+      // ERROR GUARDANDO
       // ========================================
 
       if (error) {
         console.error(
-          "ERROR AL GUARDAR PRODUCTO:",
-          error
+          "================================"
         );
+
+        console.error(
+          "ERROR GUARDANDO PRODUCTO:"
+        );
+
+        console.error(error);
+
+        console.error(
+          "================================"
+        );
+
+        // Si la imagen se subió pero
+        // el producto no se pudo guardar,
+        // eliminamos la imagen para no dejar
+        // archivos basura en Storage.
+
+        if (imagenSubidaNueva) {
+          const {
+            error: errorEliminar,
+          } = await supabase.storage
+            .from("productos")
+            .remove([
+              imagenSubidaNueva,
+            ]);
+
+          if (errorEliminar) {
+            console.error(
+              "NO SE PUDO ELIMINAR LA IMAGEN:",
+              errorEliminar
+            );
+          }
+        }
 
         alert(
-          "La imagen se subió, pero hubo un error al guardar el producto."
+          `No se pudo guardar el producto.\n\n${error.message}`
         );
 
+        setGuardando(false);
         return;
       }
 
       // ========================================
-      // 6. PRODUCTO GUARDADO
+      // PRODUCTO GUARDADO
       // ========================================
 
       console.log(
-        "Producto guardado correctamente:",
+        "PRODUCTO GUARDADO CORRECTAMENTE:",
         data
       );
 
@@ -495,26 +759,36 @@ const Admin = () => {
       );
 
       // ========================================
-      // 7. LIMPIAR FORMULARIO
+      // LIMPIAR
       // ========================================
 
       limpiarFormulario();
 
       // ========================================
-      // 8. ACTUALIZAR PRODUCTOS
+      // ACTUALIZAR LISTA
       // ========================================
 
-      obtenerProductos();
+      await obtenerProductos();
 
     } catch (error) {
       console.error(
-        "Error inesperado:",
+        "ERROR INESPERADO:",
         error
       );
 
+      if (imagenSubidaNueva) {
+        await supabase.storage
+          .from("productos")
+          .remove([
+            imagenSubidaNueva,
+          ]);
+      }
+
       alert(
-        "Ocurrió un error inesperado."
+        `Ocurrió un error inesperado.\n\n${error.message}`
       );
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -527,9 +801,7 @@ const Admin = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-10">
 
-        {/* ======================================
-            TÍTULO
-        ====================================== */}
+        {/* TÍTULO */}
 
         <div className="mb-8">
 
@@ -538,22 +810,19 @@ const Admin = () => {
           </h1>
 
           <p className="text-gray-600 mt-2">
-            Gestioná los productos de ACTIVE
+            Gestioná los productos de ACTIVE.ar
           </p>
 
         </div>
 
-
-        {/* ======================================
+        {/* ====================================
             FORMULARIO
-        ====================================== */}
+        ==================================== */}
 
         <form
           onSubmit={guardarProducto}
           className="bg-white p-6 rounded-xl shadow-md space-y-5"
         >
-
-          {/* TÍTULO DEL FORMULARIO */}
 
           <h2 className="text-2xl font-bold text-gray-900">
             {editandoId
@@ -561,28 +830,71 @@ const Admin = () => {
               : "Agregar nuevo producto"}
           </h2>
 
+          {/* CATEGORÍA */}
 
-          {/* MENSAJE DE EDICIÓN */}
+          <div>
 
-          {editandoId && (
-            <div className="bg-blue-100 text-blue-900 p-4 rounded-lg">
+            <label className="block font-medium mb-1">
+              ¿Dónde querés cargar el producto?
+            </label>
 
-              <p className="font-medium">
-                Estás editando un producto.
-              </p>
+            <select
+              value={categorias}
+              onChange={cambiarCategoria}
+              className="w-full border rounded-lg px-3 py-2 bg-white"
+            >
 
-              <p className="text-sm mt-1">
-                Modificá los datos que quieras y
-                después presioná "Actualizar producto".
-              </p>
+              <option value="">
+                Seleccioná una categoría
+              </option>
+
+              <option value="ropa">
+                Ropa
+              </option>
+
+              <option value="gym">
+                Gym
+              </option>
+
+            </select>
+
+          </div>
+
+          {/* GÉNERO */}
+
+          {categorias === "gym" && (
+            <div>
+
+              <label className="block font-medium mb-1">
+                ¿Para quién es?
+              </label>
+
+              <select
+                value={genero}
+                onChange={(e) =>
+                  setGenero(e.target.value)
+                }
+                className="w-full border rounded-lg px-3 py-2 bg-white"
+              >
+
+                <option value="">
+                  Seleccioná género
+                </option>
+
+                <option value="hombre">
+                  Hombre
+                </option>
+
+                <option value="mujer">
+                  Mujer
+                </option>
+
+              </select>
 
             </div>
           )}
 
-
-          {/* ======================================
-              IMAGEN
-          ====================================== */}
+          {/* IMAGEN */}
 
           <div>
 
@@ -598,34 +910,25 @@ const Admin = () => {
               className="w-full border rounded-lg px-3 py-2"
             />
 
-            {/* VISTA PREVIA */}
-
             {vistaPrevia && (
-
               <div className="mt-4">
 
                 <p className="text-sm text-gray-500 mb-2">
-                  {editandoId
-                    ? "Imagen actual / nueva imagen:"
-                    : "Vista previa:"}
+                  Vista previa:
                 </p>
 
                 <img
                   src={vistaPrevia}
-                  alt="Vista previa del producto"
+                  alt="Vista previa"
                   className="w-48 h-48 object-cover rounded-lg border"
                 />
 
               </div>
-
             )}
 
           </div>
 
-
-          {/* ======================================
-              NOMBRE
-          ====================================== */}
+          {/* NOMBRE */}
 
           <div>
 
@@ -639,16 +942,13 @@ const Admin = () => {
               onChange={(e) =>
                 setNombre(e.target.value)
               }
-              placeholder="Ej: Campera deportiva"
+              placeholder="Ej: Buso"
               className="w-full border rounded-lg px-3 py-2"
             />
 
           </div>
 
-
-          {/* ======================================
-              MARCA
-          ====================================== */}
+          {/* MARCA */}
 
           <div>
 
@@ -662,16 +962,13 @@ const Admin = () => {
               onChange={(e) =>
                 setMarca(e.target.value)
               }
-              placeholder="Ej: Adidas"
+              placeholder="Ej: Puma"
               className="w-full border rounded-lg px-3 py-2"
             />
 
           </div>
 
-
-          {/* ======================================
-              PRECIO
-          ====================================== */}
+          {/* PRECIO */}
 
           <div>
 
@@ -692,33 +989,7 @@ const Admin = () => {
 
           </div>
 
-
-          {/* ======================================
-              CATEGORÍA
-          ====================================== */}
-
-          <div>
-
-            <label className="block font-medium mb-1">
-              Categoría
-            </label>
-
-            <input
-              type="text"
-              value={categorias}
-              onChange={(e) =>
-                setCategorias(e.target.value)
-              }
-              placeholder="Ej: Hombre"
-              className="w-full border rounded-lg px-3 py-2"
-            />
-
-          </div>
-
-
-          {/* ======================================
-              DESCRIPCIÓN
-          ====================================== */}
+          {/* DESCRIPCIÓN */}
 
           <div>
 
@@ -729,7 +1000,9 @@ const Admin = () => {
             <textarea
               value={descripcion}
               onChange={(e) =>
-                setDescripcion(e.target.value)
+                setDescripcion(
+                  e.target.value
+                )
               }
               placeholder="Descripción del producto"
               rows="4"
@@ -738,10 +1011,7 @@ const Admin = () => {
 
           </div>
 
-
-          {/* ======================================
-              COLORES
-          ====================================== */}
+          {/* COLORES */}
 
           <div>
 
@@ -755,47 +1025,17 @@ const Admin = () => {
               onChange={(e) =>
                 setColores(e.target.value)
               }
-              placeholder="Ej: Negro, Azul, Blanco"
+              placeholder="Ej: Negro, Gris, Blanco"
               className="w-full border rounded-lg px-3 py-2"
             />
 
             <p className="text-sm text-gray-500 mt-1">
-              Separá los colores con comas.
+              Separalos con comas.
             </p>
 
           </div>
 
-
-          {/* ======================================
-              ALTURAS / TALLES
-          ====================================== */}
-
-          <div>
-
-            <label className="block font-medium mb-1">
-              Alturas
-            </label>
-
-            <input
-              type="text"
-              value={alturas}
-              onChange={(e) =>
-                setAlturas(e.target.value)
-              }
-              placeholder="Ej: S, M, L, XL"
-              className="w-full border rounded-lg px-3 py-2"
-            />
-
-            <p className="text-sm text-gray-500 mt-1">
-              Separá las alturas con comas.
-            </p>
-
-          </div>
-
-
-          {/* ======================================
-              EXISTENCIAS
-          ====================================== */}
+          {/* EXISTENCIAS */}
 
           <div>
 
@@ -807,7 +1047,9 @@ const Admin = () => {
               type="number"
               value={existencias}
               onChange={(e) =>
-                setExistencias(e.target.value)
+                setExistencias(
+                  e.target.value
+                )
               }
               placeholder="Ej: 10"
               min="0"
@@ -816,29 +1058,33 @@ const Admin = () => {
 
           </div>
 
-
-          {/* ======================================
-              BOTONES DEL FORMULARIO
-          ====================================== */}
+          {/* BOTONES */}
 
           <div className="flex flex-col gap-3">
 
             <button
               type="submit"
-              className="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-800 transition font-semibold"
+              disabled={guardando}
+              className={`w-full text-white py-3 rounded-lg font-semibold transition ${
+                guardando
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-900 hover:bg-blue-800"
+              }`}
             >
-              {editandoId
+
+              {guardando
+                ? "Guardando producto..."
+                : editandoId
                 ? "Actualizar producto"
                 : "Guardar producto"}
+
             </button>
-
-
-            {/* CANCELAR EDICIÓN */}
 
             {editandoId && (
               <button
                 type="button"
                 onClick={cancelarEdicion}
+                disabled={guardando}
                 className="w-full bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600 transition font-semibold"
               >
                 Cancelar edición
@@ -849,64 +1095,32 @@ const Admin = () => {
 
         </form>
 
-
-        {/* ======================================
-            PRODUCTOS EXISTENTES
-        ====================================== */}
+        {/* ====================================
+            PRODUCTOS CARGADOS
+        ==================================== */}
 
         <section className="mt-12">
 
-          <div className="mb-6">
-
-            <h2 className="text-2xl font-bold text-gray-900">
-              Productos cargados
-            </h2>
-
-            <p className="text-gray-600 mt-1">
-              Estos son los productos guardados en Supabase.
-            </p>
-
-          </div>
-
-
-          {/* ======================================
-              CARGANDO
-          ====================================== */}
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Productos cargados
+          </h2>
 
           {cargandoProductos && (
-
             <div className="bg-white rounded-xl shadow-md p-8 text-center">
-
               <p className="text-gray-600">
                 Cargando productos...
               </p>
-
             </div>
-
           )}
-
-
-          {/* ======================================
-              SIN PRODUCTOS
-          ====================================== */}
 
           {!cargandoProductos &&
             productos.length === 0 && (
-
               <div className="bg-white rounded-xl shadow-md p-8 text-center">
-
                 <p className="text-gray-600">
                   No hay productos cargados.
                 </p>
-
               </div>
-
             )}
-
-
-          {/* ======================================
-              LISTA DE PRODUCTOS
-          ====================================== */}
 
           {!cargandoProductos &&
             productos.length > 0 && (
@@ -920,9 +1134,7 @@ const Admin = () => {
                     className="bg-white rounded-xl shadow-md overflow-hidden"
                   >
 
-                    {/* ======================================
-                        IMAGEN
-                    ====================================== */}
+                    {/* IMAGEN */}
 
                     <div className="w-full h-64 bg-gray-100 overflow-hidden">
 
@@ -932,32 +1144,6 @@ const Admin = () => {
                           src={producto.imagen_url}
                           alt={producto.nombre}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            console.log(
-                              "ERROR CARGANDO IMAGEN:",
-                              producto.imagen_url
-                            );
-
-                            e.currentTarget.style.display =
-                              "none";
-                          }}
-                        />
-
-                      ) : producto.imagen ? (
-
-                        <img
-                          src={producto.imagen}
-                          alt={producto.nombre}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            console.log(
-                              "ERROR CARGANDO IMAGEN:",
-                              producto.imagen
-                            );
-
-                            e.currentTarget.style.display =
-                              "none";
-                          }}
                         />
 
                       ) : (
@@ -970,10 +1156,7 @@ const Admin = () => {
 
                     </div>
 
-
-                    {/* ======================================
-                        INFORMACIÓN
-                    ====================================== */}
+                    {/* INFORMACIÓN */}
 
                     <div className="p-5">
 
@@ -985,41 +1168,56 @@ const Admin = () => {
                         {producto.marca}
                       </p>
 
+                      <p className="text-gray-600 mt-2">
+                        Categoría:{" "}
+                        <span className="font-medium">
+                          {producto.categorias === "gym"
+                            ? "Gym"
+                            : "Ropa"}
+                        </span>
+                      </p>
+
+                      {producto.genero && (
+                        <p className="text-gray-600 mt-1">
+                          Género:{" "}
+                          <span className="font-medium capitalize">
+                            {producto.genero}
+                          </span>
+                        </p>
+                      )}
+
                       <p className="text-blue-900 font-bold text-xl mt-3">
                         $
                         {Number(
                           producto.precio
-                        ).toLocaleString("es-AR")}
+                        ).toLocaleString(
+                          "es-AR"
+                        )}
                       </p>
 
                       <p className="text-gray-600 mt-2">
-                        Stock: {producto.existencias}
+                        Stock:{" "}
+                        {producto.existencias}
                       </p>
-
-
-                      {/* ======================================
-                          BOTÓN EDITAR
-                      ====================================== */}
 
                       <button
                         type="button"
                         onClick={() =>
-                          editarProducto(producto)
+                          editarProducto(
+                            producto
+                          )
                         }
                         className="w-full mt-4 bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-800 transition"
                       >
                         Editar producto
                       </button>
 
-
-                      {/* ======================================
-                          BOTÓN ELIMINAR
-                      ====================================== */}
-
                       <button
                         type="button"
                         onClick={() =>
-                          eliminarProducto(producto.id)
+                          eliminarProducto(
+                            producto.id
+                          )
                         }
                         className="w-full mt-3 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition"
                       >

@@ -6,11 +6,11 @@ const probarConexion = async () => {
     .select("*");
 
   if (error) {
-    console.error("❌ Error conectando con Supabase:", error);
+    console.error("❌ ERROR DE SUPABASE:", error);
     return;
   }
 
-  console.log("✅ Supabase conectado correctamente");
+  console.log("✅ SUPABASE LEE PRODUCTOS CORRECTAMENTE");
   console.log("📦 Productos:", data);
 };
 
