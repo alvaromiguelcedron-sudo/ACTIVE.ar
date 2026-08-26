@@ -10,19 +10,23 @@ const Admin = () => {
   const [marca, setMarca] = useState("");
   const [precio, setPrecio] = useState("");
 
-  // La columna REAL de Supabase es: categoria
+  // COLUMNA REAL: categoria
   const [categoria, setCategoria] = useState("");
 
-  // La columna REAL de Supabase es: género
+  // COLUMNA REAL: genero
   const [genero, setGenero] = useState("");
 
-  // La columna REAL de Supabase es: descripción
+  // COLUMNA REAL: descripcion
   const [descripcion, setDescripcion] = useState("");
 
+  // COLUMNA REAL: colores
   const [colores, setColores] = useState("");
 
-  // La columna REAL de Supabase es: existencias
-  const [existencias, setExistencias] = useState("");
+  // COLUMNA REAL: talles
+  const [talles, setTalles] = useState("");
+
+  // COLUMNA REAL: stock
+  const [stock, setStock] = useState("");
 
   // ==========================================
   // IMAGEN
@@ -65,16 +69,13 @@ const Admin = () => {
 
     if (!archivo.type.startsWith("image/")) {
       alert("Seleccioná un archivo de imagen válido.");
-
       e.target.value = "";
-
       return;
     }
 
     setImagen(archivo);
 
     const url = URL.createObjectURL(archivo);
-
     setVistaPrevia(url);
   };
 
@@ -106,7 +107,6 @@ const Admin = () => {
     console.log("PRODUCTOS DESDE SUPABASE:", data);
 
     setProductos(data || []);
-
     setCargandoProductos(false);
   };
 
@@ -126,14 +126,12 @@ const Admin = () => {
     setNombre("");
     setMarca("");
     setPrecio("");
-
     setCategoria("");
     setGenero("");
-
     setDescripcion("");
     setColores("");
-
-    setExistencias("");
+    setTalles("");
+    setStock("");
 
     setImagen(null);
     setVistaPrevia("");
@@ -154,13 +152,9 @@ const Admin = () => {
 
     setCategoria(nuevaCategoria);
 
-    // Si es ropa, no necesitamos género
-    if (nuevaCategoria === "ropa") {
-      setGenero("");
-    }
-
-    // Si es gym, deberá seleccionar género
-    if (nuevaCategoria === "gym") {
+    // Por ahora Gym sí utiliza género.
+    // Ropa también puede quedar sin género.
+    if (nuevaCategoria !== "gym") {
       setGenero("");
     }
   };
@@ -182,7 +176,6 @@ const Admin = () => {
 
     let categoriaActual = producto.categoria || "";
 
-    // Por si algún producto viejo tiene "gimnasia"
     if (
       categoriaActual === "gimnasia" ||
       categoriaActual === "Gym" ||
@@ -197,13 +190,13 @@ const Admin = () => {
     // GÉNERO
     // ========================================
 
-    setGenero(producto["género"] || "");
+    setGenero(producto.genero || "");
 
     // ========================================
     // DESCRIPCIÓN
     // ========================================
 
-    setDescripcion(producto["descripción"] || "");
+    setDescripcion(producto.descripcion || "");
 
     // ========================================
     // COLORES
@@ -216,21 +209,30 @@ const Admin = () => {
     }
 
     // ========================================
-    // EXISTENCIAS
+    // TALLES
     // ========================================
 
-    setExistencias(producto.existencias ?? "");
+    if (Array.isArray(producto.talles)) {
+      setTalles(producto.talles.join(", "));
+    } else {
+      setTalles(producto.talles || "");
+    }
 
     // ========================================
-    // IMAGEN ACTUAL
+    // STOCK
+    // ========================================
+
+    setStock(producto.stock ?? "");
+
+    // ========================================
+    // IMAGEN
     // ========================================
 
     setVistaPrevia(producto.imagen_url || "");
-
     setImagen(null);
 
     // ========================================
-    // ID REAL DE SUPABASE
+    // ID
     // ========================================
 
     setEditandoId(producto.id);
@@ -274,7 +276,7 @@ const Admin = () => {
       console.log("ELIMINANDO PRODUCTO ID:", id);
 
       // ========================================
-      // 1. BUSCAR PRODUCTO
+      // BUSCAR PRODUCTO
       // ========================================
 
       const producto = productos.find(
@@ -282,7 +284,7 @@ const Admin = () => {
       );
 
       // ========================================
-      // 2. ELIMINAR DE LA TABLA
+      // ELIMINAR DE LA TABLA
       // ========================================
 
       const { error } = await supabase
@@ -304,7 +306,7 @@ const Admin = () => {
       }
 
       // ========================================
-      // 3. ELIMINAR IMAGEN DEL STORAGE
+      // ELIMINAR IMAGEN DEL STORAGE
       // ========================================
 
       if (producto?.imagen_url) {
@@ -313,17 +315,15 @@ const Admin = () => {
             producto.imagen_url
           );
 
-          const partes =
-            url.pathname.split("/");
+          const partes = url.pathname.split("/");
 
           const indiceProductos =
             partes.indexOf("productos");
 
           if (indiceProductos !== -1) {
-            const nombreArchivo =
-              partes
-                .slice(indiceProductos + 1)
-                .join("/");
+            const nombreArchivo = partes
+              .slice(indiceProductos + 1)
+              .join("/");
 
             if (nombreArchivo) {
               const {
@@ -334,7 +334,7 @@ const Admin = () => {
 
               if (errorImagen) {
                 console.error(
-                  "No se pudo eliminar la imagen:",
+                  "NO SE PUDO ELIMINAR LA IMAGEN:",
                   errorImagen
                 );
               }
@@ -342,7 +342,7 @@ const Admin = () => {
           }
         } catch (errorImagen) {
           console.error(
-            "Error procesando imagen:",
+            "ERROR PROCESANDO IMAGEN:",
             errorImagen
           );
         }
@@ -391,12 +391,10 @@ const Admin = () => {
       !categoria ||
       !descripcion.trim() ||
       !colores.trim() ||
-      existencias === ""
+      !talles.trim() ||
+      stock === ""
     ) {
-      alert(
-        "Completá todos los campos."
-      );
-
+      alert("Completá todos los campos.");
       return;
     }
 
@@ -405,22 +403,16 @@ const Admin = () => {
     // ==========================================
 
     if (Number(precio) < 0) {
-      alert(
-        "El precio no puede ser negativo."
-      );
-
+      alert("El precio no puede ser negativo.");
       return;
     }
 
     // ==========================================
-    // VALIDAR EXISTENCIAS
+    // VALIDAR STOCK
     // ==========================================
 
-    if (Number(existencias) < 0) {
-      alert(
-        "Las existencias no pueden ser negativas."
-      );
-
+    if (Number(stock) < 0) {
+      alert("El stock no puede ser negativo.");
       return;
     }
 
@@ -428,10 +420,7 @@ const Admin = () => {
     // GYM NECESITA GÉNERO
     // ==========================================
 
-    if (
-      categoria === "gym" &&
-      !genero
-    ) {
+    if (categoria === "gym" && !genero) {
       alert(
         "Seleccioná Hombre o Mujer para el producto de Gym."
       );
@@ -440,7 +429,7 @@ const Admin = () => {
     }
 
     // ==========================================
-    // ROPA NO GUARDA GÉNERO
+    // GÉNERO QUE SE GUARDA
     // ==========================================
 
     const generoParaGuardar =
@@ -472,13 +461,20 @@ const Admin = () => {
       const coloresArray = colores
         .split(",")
         .map((color) => color.trim())
-        .filter(
-          (color) => color !== ""
-        );
+        .filter((color) => color !== "");
 
       // ========================================
-      // EDITAR PRODUCTO
+      // TALLES
       // ========================================
+
+      const tallesArray = talles
+        .split(",")
+        .map((talle) => talle.trim())
+        .filter((talle) => talle !== "");
+
+      // ==========================================
+      // EDITAR PRODUCTO
+      // ==========================================
 
       if (editandoId) {
         let imagenUrlActual = null;
@@ -491,11 +487,10 @@ const Admin = () => {
           );
 
         imagenUrlActual =
-          productoActual?.imagen_url ||
-          null;
+          productoActual?.imagen_url || null;
 
         // ======================================
-        // SI SE SELECCIONÓ UNA IMAGEN NUEVA
+        // SI HAY IMAGEN NUEVA
         // ======================================
 
         if (imagen) {
@@ -573,27 +568,35 @@ const Admin = () => {
         } = await supabase
           .from("productos")
           .update({
+            // COLUMNA REAL
             nombre: nombre.trim(),
 
+            // COLUMNA REAL
             marca: marca.trim(),
 
+            // COLUMNA REAL
             precio: Number(precio),
 
             // COLUMNA REAL
             categoria: categoria,
 
             // COLUMNA REAL
-            "género": generoParaGuardar,
+            genero: generoParaGuardar,
 
             // COLUMNA REAL
-            "descripción":
+            descripcion:
               descripcion.trim(),
 
+            // COLUMNA REAL
             colores: coloresArray,
 
-            existencias:
-              Number(existencias),
+            // COLUMNA REAL
+            talles: tallesArray,
 
+            // COLUMNA REAL
+            stock: Number(stock),
+
+            // COLUMNA REAL
             imagen_url:
               imagenUrlActual,
           })
@@ -605,8 +608,9 @@ const Admin = () => {
             error
           );
 
-          // Si subimos imagen nueva pero
-          // falló la actualización
+          // Si se subió una imagen nueva
+          // pero falló la actualización,
+          // eliminarla.
           if (imagenSubidaNueva) {
             await supabase.storage
               .from("productos")
@@ -717,24 +721,29 @@ const Admin = () => {
       );
 
       // ========================================
-      // GUARDAR PRODUCTO
+      // PRODUCTO QUE SE VA A GUARDAR
       // ========================================
 
       console.log(
-        "PRODUCTO QUE SE VA A GUARDAR:"
+        "PRODUCTO QUE SE VA A GUARDAR:",
+        {
+          nombre: nombre.trim(),
+          marca: marca.trim(),
+          precio: Number(precio),
+          categoria: categoria,
+          genero: generoParaGuardar,
+          descripcion:
+            descripcion.trim(),
+          colores: coloresArray,
+          talles: tallesArray,
+          stock: Number(stock),
+          imagen_url: imagenUrl,
+        }
       );
 
-      console.log({
-        nombre: nombre.trim(),
-        marca: marca.trim(),
-        precio: Number(precio),
-        categoria: categoria,
-        genero: generoParaGuardar,
-        descripcion: descripcion.trim(),
-        colores: coloresArray,
-        existencias: Number(existencias),
-        imagen_url: imagenUrl,
-      });
+      // ========================================
+      // GUARDAR PRODUCTO
+      // ========================================
 
       const {
         data,
@@ -756,30 +765,29 @@ const Admin = () => {
             categoria: categoria,
 
             // COLUMNA REAL
-            "género":
-              generoParaGuardar,
+            colores: coloresArray,
 
             // COLUMNA REAL
-            "descripción":
+            talles: tallesArray,
+
+            // COLUMNA REAL
+            stock: Number(stock),
+
+            // COLUMNA REAL
+            imagen_url: imagenUrl,
+
+            // COLUMNA REAL
+            genero: generoParaGuardar,
+
+            // COLUMNA REAL
+            descripcion:
               descripcion.trim(),
-
-            // COLUMNA REAL
-            colores:
-              coloresArray,
-
-            // COLUMNA REAL
-            existencias:
-              Number(existencias),
-
-            // COLUMNA REAL
-            imagen_url:
-              imagenUrl,
           },
         ])
         .select();
 
       // ========================================
-      // ERROR GUARDANDO
+      // ERROR GUARDANDO PRODUCTO
       // ========================================
 
       if (error) {
@@ -798,7 +806,8 @@ const Admin = () => {
         );
 
         // Si la imagen se subió pero
-        // el producto falló, borrar imagen
+        // el producto falló,
+        // eliminar la imagen.
         if (imagenSubidaNueva) {
           await supabase.storage
             .from("productos")
@@ -839,7 +848,7 @@ const Admin = () => {
       );
 
       // Si la imagen quedó subida,
-      // intentamos eliminarla
+      // intentar eliminarla.
       if (imagenSubidaNueva) {
         await supabase.storage
           .from("productos")
@@ -935,6 +944,7 @@ const Admin = () => {
           ================================== */}
 
           {categoria === "gym" && (
+
             <div>
 
               <label className="block font-medium mb-1">
@@ -964,6 +974,7 @@ const Admin = () => {
               </select>
 
             </div>
+
           )}
 
           {/* ==================================
@@ -985,6 +996,7 @@ const Admin = () => {
             />
 
             {vistaPrevia && (
+
               <div className="mt-4">
 
                 <p className="text-sm text-gray-500 mb-2">
@@ -998,6 +1010,7 @@ const Admin = () => {
                 />
 
               </div>
+
             )}
 
           </div>
@@ -1123,20 +1136,48 @@ const Admin = () => {
           </div>
 
           {/* ==================================
-              EXISTENCIAS
+              TALLES
           ================================== */}
 
           <div>
 
             <label className="block font-medium mb-1">
-              Existencias
+              Talles
+            </label>
+
+            <input
+              type="text"
+              value={talles}
+              onChange={(e) =>
+                setTalles(
+                  e.target.value
+                )
+              }
+              placeholder="Ej: S, M, L, XL"
+              className="w-full border rounded-lg px-3 py-2"
+            />
+
+            <p className="text-sm text-gray-500 mt-1">
+              Separalos con comas.
+            </p>
+
+          </div>
+
+          {/* ==================================
+              STOCK
+          ================================== */}
+
+          <div>
+
+            <label className="block font-medium mb-1">
+              Stock
             </label>
 
             <input
               type="number"
-              value={existencias}
+              value={stock}
               onChange={(e) =>
-                setExistencias(
+                setStock(
                   e.target.value
                 )
               }
@@ -1172,6 +1213,7 @@ const Admin = () => {
             </button>
 
             {editandoId && (
+
               <button
                 type="button"
                 onClick={cancelarEdicion}
@@ -1180,6 +1222,7 @@ const Admin = () => {
               >
                 Cancelar edición
               </button>
+
             )}
 
           </div>
@@ -1199,6 +1242,7 @@ const Admin = () => {
           {/* CARGANDO */}
 
           {cargandoProductos && (
+
             <div className="bg-white rounded-xl shadow-md p-8 text-center">
 
               <p className="text-gray-600">
@@ -1206,12 +1250,14 @@ const Admin = () => {
               </p>
 
             </div>
+
           )}
 
           {/* SIN PRODUCTOS */}
 
           {!cargandoProductos &&
             productos.length === 0 && (
+
               <div className="bg-white rounded-xl shadow-md p-8 text-center">
 
                 <p className="text-gray-600">
@@ -1219,6 +1265,7 @@ const Admin = () => {
                 </p>
 
               </div>
+
             )}
 
           {/* LISTA */}
@@ -1277,28 +1324,32 @@ const Admin = () => {
                           Categoría:{" "}
 
                           <span className="font-medium capitalize">
+
                             {producto.categoria ===
                               "gym" ||
                             producto.categoria ===
                               "gimnasia"
                               ? "Gym"
                               : "Ropa"}
+
                           </span>
 
                         </p>
 
                         {/* GÉNERO */}
 
-                        {producto["género"] && (
+                        {producto.genero && (
+
                           <p className="text-gray-600 mt-1">
 
                             Género:{" "}
 
                             <span className="font-medium capitalize">
-                              {producto["género"]}
+                              {producto.genero}
                             </span>
 
                           </p>
+
                         )}
 
                         {/* PRECIO */}
@@ -1319,10 +1370,25 @@ const Admin = () => {
                         <p className="text-gray-600 mt-2">
 
                           Stock:{" "}
-
-                          {producto.existencias}
+                          {producto.stock}
 
                         </p>
+
+                        {/* DESCRIPCIÓN */}
+
+                        {producto.descripcion && (
+
+                          <p className="text-gray-600 mt-2">
+
+                            <span className="font-medium">
+                              Descripción:
+                            </span>{" "}
+
+                            {producto.descripcion}
+
+                          </p>
+
+                        )}
 
                         {/* COLORES */}
 
@@ -1337,6 +1403,26 @@ const Admin = () => {
                               Colores:{" "}
 
                               {producto.colores.join(
+                                ", "
+                              )}
+
+                            </p>
+
+                          )}
+
+                        {/* TALLES */}
+
+                        {Array.isArray(
+                          producto.talles
+                        ) &&
+                          producto.talles.length >
+                            0 && (
+
+                            <p className="text-gray-600 mt-1">
+
+                              Talles:{" "}
+
+                              {producto.talles.join(
                                 ", "
                               )}
 
