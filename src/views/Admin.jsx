@@ -720,6 +720,47 @@ const Admin = () => {
             />
 
           </div>
+                    {/* ======================================
+              CATEGORÍA
+          ====================================== */}
+
+          <div>
+            <label className="block font-medium mb-1">
+              Categoría
+            </label>
+
+            <select
+              value={categoria}
+              onChange={(e) => {
+                const nuevaCategoria = e.target.value;
+
+                setCategoria(nuevaCategoria);
+
+                // Si elegimos Ropa, no usamos género
+                if (nuevaCategoria === "ropa") {
+                  setGenero("");
+                }
+
+                // Si elegimos Gym, dejamos género vacío
+                if (nuevaCategoria === "gym") {
+                  setGenero("");
+                }
+              }}
+              className="w-full border rounded-lg px-3 py-2 bg-white"
+            >
+              <option value="">
+                Seleccioná una categoría
+              </option>
+
+              <option value="ropa">
+                Ropa
+              </option>
+
+              <option value="gym">
+                Gym
+              </option>
+            </select>
+          </div>
 
           {/* GÉNERO - SOLO APARECE SI LA CATEGORÍA ES GYM */}
 {categoria === "gym" && (
