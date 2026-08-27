@@ -130,7 +130,17 @@ const Admin = () => {
     setCategoria(producto.categoria || "");
 
     // COLUMNA REAL: descripcion
-    setDescripcion(producto.descripcion || "");
+    if (
+  producto["categorías"] === "gimnasia" ||
+  producto["categorías"] === "Gym" ||
+  producto["categorías"] === "Gimnasia"
+) {
+  setCategoria("gym");
+} else {
+  setCategoria(
+    producto["categorías"] || ""
+  );
+}
 
     // COLUMNA REAL: colores
     setColores(
@@ -720,49 +730,50 @@ const Admin = () => {
             />
 
           </div>
-                    {/* ======================================
-              CATEGORÍA
-          ====================================== */}
+                   {/* ======================================
+    CATEGORÍA
+====================================== */}
 
-          <div>
-            <label className="block font-medium mb-1">
-              Categoría
-            </label>
+<div>
+  <label className="block font-medium mb-1">
+    Categoría
+  </label>
 
-            <select
-              value={categoria}
-              onChange={(e) => {
-                const nuevaCategoria = e.target.value;
+  <select
+    value={categoria}
+    onChange={(e) => {
+      const nuevaCategoria = e.target.value;
 
-                setCategoria(nuevaCategoria);
+      setCategoria(nuevaCategoria);
 
-                // Si elegimos Ropa, no usamos género
-                if (nuevaCategoria === "ropa") {
-                  setGenero("");
-                }
+      if (nuevaCategoria === "ropa") {
+        setGenero("");
+      }
 
-                // Si elegimos Gym, dejamos género vacío
-                if (nuevaCategoria === "gym") {
-                  setGenero("");
-                }
-              }}
-              className="w-full border rounded-lg px-3 py-2 bg-white"
-            >
-              <option value="">
-                Seleccioná una categoría
-              </option>
+      if (nuevaCategoria === "gym") {
+        setGenero("");
+      }
+    }}
+    className="w-full border rounded-lg px-3 py-2 bg-white"
+  >
+    <option value="">
+      Seleccioná una categoría
+    </option>
 
-              <option value="ropa">
-                Ropa
-              </option>
+    <option value="ropa">
+      Ropa
+    </option>
 
-              <option value="gym">
-                Gym
-              </option>
-            </select>
-          </div>
+    <option value="gym">
+      Gym
+    </option>
+  </select>
+</div>
 
-          {/* GÉNERO - SOLO APARECE SI LA CATEGORÍA ES GYM */}
+{/* ======================================
+    GÉNERO - SOLO PARA GYM
+====================================== */}
+
 {categoria === "gym" && (
   <div>
     <label className="block font-medium mb-1">
@@ -789,39 +800,7 @@ const Admin = () => {
   </div>
 )}
 
-         {/* ======================================
-    GÉNERO
-====================================== */}
-
-{categoria === "ropa" && (
-  <div>
-
-    <label className="block font-medium mb-1">
-      Género
-    </label>
-
-    <select
-      value={genero}
-      onChange={(e) =>
-        setGenero(e.target.value)
-      }
-      className="w-full border rounded-lg px-3 py-2"
-    >
-      <option value="">
-        Seleccioná un género
-      </option>
-
-      <option value="hombre">
-        Hombre
-      </option>
-
-      <option value="mujer">
-        Mujer
-      </option>
-    </select>
-
-  </div>
-)}
+        
           {/* ======================================
               DESCRIPCIÓN
           ====================================== */}
