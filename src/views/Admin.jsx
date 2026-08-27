@@ -721,10 +721,7 @@ const Admin = () => {
 
           </div>
 
-          {/* ======================================
-    GÉNERO SOLO PARA GYM
-====================================== */}
-
+          {/* GÉNERO - SOLO APARECE SI LA CATEGORÍA ES GYM */}
 {categoria === "gym" && (
   <div>
     <label className="block font-medium mb-1">
@@ -733,9 +730,7 @@ const Admin = () => {
 
     <select
       value={genero}
-      onChange={(e) =>
-        setGenero(e.target.value)
-      }
+      onChange={(e) => setGenero(e.target.value)}
       className="w-full border rounded-lg px-3 py-2 bg-white"
     >
       <option value="">
