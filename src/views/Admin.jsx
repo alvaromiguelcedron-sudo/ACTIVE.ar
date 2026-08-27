@@ -359,7 +359,7 @@ const Admin = () => {
             stock: Number(stock),
 
             // COLUMNA REAL
-            genero: genero || null,
+            genero: categoria === "gym" ? genero : null,
 
             // COLUMNA REAL
             imagen_url: imagenUrlActual,
@@ -467,7 +467,7 @@ const Admin = () => {
           colores: coloresArray,
           talles: tallesArray,
           stock: Number(stock),
-          genero: genero || null,
+          genero: categoria === "gym" ? genero : null,
           imagen_url: imagenUrl,
         }
       );
@@ -722,41 +722,36 @@ const Admin = () => {
           </div>
 
           {/* ======================================
-    CATEGORÍA
+    GÉNERO SOLO PARA GYM
 ====================================== */}
 
-<div>
+{categoria === "gym" && (
+  <div>
+    <label className="block font-medium mb-1">
+      Género
+    </label>
 
-  <label className="block font-medium mb-1">
-    Categoría
-  </label>
-
-  <select
-    value={categoria}
-    onChange={(e) => {
-      setCategoria(e.target.value);
-
-      // Si elegimos Gym, limpiamos el género
-      if (e.target.value === "gym") {
-        setGenero("");
+    <select
+      value={genero}
+      onChange={(e) =>
+        setGenero(e.target.value)
       }
-    }}
-    className="w-full border rounded-lg px-3 py-2"
-  >
-    <option value="">
-      Seleccioná una categoría
-    </option>
+      className="w-full border rounded-lg px-3 py-2 bg-white"
+    >
+      <option value="">
+        Seleccioná un género
+      </option>
 
-    <option value="ropa">
-      Ropa
-    </option>
+      <option value="hombre">
+        Hombre
+      </option>
 
-    <option value="gym">
-      Gimnasio
-    </option>
-  </select>
-
-</div>
+      <option value="mujer">
+        Mujer
+      </option>
+    </select>
+  </div>
+)}
 
          {/* ======================================
     GÉNERO
