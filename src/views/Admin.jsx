@@ -722,65 +722,75 @@ const Admin = () => {
           </div>
 
           {/* ======================================
-              CATEGORÍA
-          ====================================== */}
+    CATEGORÍA
+====================================== */}
 
-          <div>
+<div>
 
-            <label className="block font-medium mb-1">
-              Categoría
-            </label>
+  <label className="block font-medium mb-1">
+    Categoría
+  </label>
 
-            <input
-              type="text"
-              value={categoria}
-              onChange={(e) =>
-                setCategoria(e.target.value)
-              }
-              placeholder="Ej: ropa"
-              className="w-full border rounded-lg px-3 py-2"
-            />
+  <select
+    value={categoria}
+    onChange={(e) => {
+      setCategoria(e.target.value);
 
-          </div>
+      // Si elegimos Gym, limpiamos el género
+      if (e.target.value === "gym") {
+        setGenero("");
+      }
+    }}
+    className="w-full border rounded-lg px-3 py-2"
+  >
+    <option value="">
+      Seleccioná una categoría
+    </option>
 
-          {/* ======================================
-              GÉNERO
-          ====================================== */}
+    <option value="ropa">
+      Ropa
+    </option>
 
-          <div>
+    <option value="gym">
+      Gimnasio
+    </option>
+  </select>
 
-            <label className="block font-medium mb-1">
-              Género
-            </label>
+</div>
 
-            <select
-              value={genero}
-              onChange={(e) =>
-                setGenero(e.target.value)
-              }
-              className="w-full border rounded-lg px-3 py-2"
-            >
+         {/* ======================================
+    GÉNERO
+====================================== */}
 
-              <option value="">
-                Seleccioná un género
-              </option>
+{categoria === "ropa" && (
+  <div>
 
-              <option value="hombre">
-                Hombre
-              </option>
+    <label className="block font-medium mb-1">
+      Género
+    </label>
 
-              <option value="mujer">
-                Mujer
-              </option>
+    <select
+      value={genero}
+      onChange={(e) =>
+        setGenero(e.target.value)
+      }
+      className="w-full border rounded-lg px-3 py-2"
+    >
+      <option value="">
+        Seleccioná un género
+      </option>
 
-              <option value="unisex">
-                Unisex
-              </option>
+      <option value="hombre">
+        Hombre
+      </option>
 
-            </select>
+      <option value="mujer">
+        Mujer
+      </option>
+    </select>
 
-          </div>
-
+  </div>
+)}
           {/* ======================================
               DESCRIPCIÓN
           ====================================== */}
